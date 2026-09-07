@@ -1,7 +1,7 @@
 <div align="center">
 
 <!-- Cyber Dark OLED Header Banner -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0_050811,40_0A0E1A,70_0D1117,100_161B22&height=230&section=header&text=Telegram%20Distribution%20Engine&fontSize=48&fontAlignY=38&desc=Refer%20%26%20Earn%20Bot%20%7C%20Redeem%20Points%20System%20%7C%20Flask%20Web%20Dashboard&descAlignY=62&descAlign=50&stroke=00F5FF&strokeWidth=1" width="100%" alt="Project Header Banner"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:161b22,100:1a1b27&height=230&section=header&text=Telegram%20Distribution%20Engine&fontSize=48&fontAlignY=38&desc=Refer%20%26%20Earn%20Bot%20%7C%20Redeem%20Points%20System%20%7C%20Flask%20Web%20Dashboard&descAlignY=62&descAlign=50&fontColor=58a6ff&descColor=8b949e&animation=fadeIn" width="100%" alt="Project Header Banner"/>
 
 <!-- Dynamic Glowing Neon Typing SVG -->
 <a href="https://github.com/lusufer-rohit/refer-and-earn-telegram-bot-with-redeem-point-system">
@@ -217,6 +217,6 @@ Architected by **[@lusufer-rohit](https://github.com/lusufer-rohit)**
 </p>
 
 <!-- Dark Wave Footer -->
-<img src="https://capsule-render.vercel.app/api?type=waving&color=0_050811,40_0A0E1A,70_0D1117,100_161B22&height=110&section=footer" width="100%" alt="Footer Banner"/>
+<img src="https://capsule-render.vercel.app/api?type=waving&color=0:0d1117,50:161b22,100:1a1b27&height=110&section=footer" width="100%" alt="Footer Banner"/>
 
 </div>
