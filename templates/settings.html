@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-dark-glass border-0 shadow-lg">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center">
+                    <div class="icon-circle bg-primary bg-opacity-25 text-primary me-3">
+                        <i class="fas fa-sliders-h fa-2x"></i>
+                    </div>
+                    <div>
+                        <h4 class="mb-1 text-white">System Configuration</h4>
+                        <p class="mb-0 text-muted">Manage core bot features, rewards, and integrations from a single
+                            control panel.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+
+
+    <!-- Reward Configuration -->
+    <div class="col-lg-6">
+        <div class="card h-100 border-0 shadow-sm hover-elevate">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
+                <h5 class="mb-0 text-white"><i class="fas fa-coins me-2 text-warning"></i>Reward System</h5>
+            </div>
+            <div class="card-body px-4 pb-4">
+                <form method="POST" action="/settings/rewards">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small text-uppercase fw-bold">Referral Points</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-light"><i
+                                        class="fas fa-user-plus"></i></span>
+                                <input type="number" class="form-control bg-dark border-secondary text-light"
+                                    name="referral_points" value="{{ default_referral_points }}" min="1">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label text-muted small text-uppercase fw-bold">Daily Reward</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-dark border-secondary text-light"><i
+                                        class="fas fa-calendar-day"></i></span>
+                                <input type="number" class="form-control bg-dark border-secondary text-light"
+                                    name="daily_points" value="{{ daily_reward_points }}" min="1">
+                            </div>
+                        </div>
+
+                    </div>
+                    <div class="d-grid mt-4">
+                        <button type="submit" class="btn btn-warning text-dark fw-bold">
+                            <i class="fas fa-check-circle me-2"></i>Update Rewards
+                        </button>
+                    </div>
+                </form>
+
+                    <hr class="border-secondary mt-4 mb-4">
+                    <form method="POST" action="/power_tools/update">
+                        <div class="form-check form-switch mb-3">
+                            <input class="form-check-input" type="checkbox" id="schedulerSwitch" name="scheduler_enabled" {% if scheduler_enabled %}checked{% endif %}>
+                            <label class="form-check-label text-light" for="schedulerSwitch">Enable Task Scheduler</label>
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-info w-100 fw-bold">
+                            <i class="fas fa-save me-2"></i>Save Scheduler Settings
+                        </button>
+                    </form>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Added from System -->
+
+<div class="col-lg-6">
+<!-- Data Management -->
+        <div class="card bg-dark-glass border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
+                <h5 class="mb-0 text-white"><i class="fas fa-database me-2 text-warning"></i>Data Management</h5>
+            </div>
+            <div class="card-body px-4">
+                <div class="mb-3">
+                    <label class="form-label text-muted small text-uppercase fw-bold">Export Data</label>
+                    <div class="btn-group w-100">
+                        <a href="/export/users" class="btn btn-outline-primary">Users</a>
+                        <a href="/export/orders" class="btn btn-outline-primary">Orders</a>
+                    </div>
+                </div>
+                <div>
+                    <label class="form-label text-muted small text-uppercase fw-bold">Import Data</label>
+                    <form method="POST" action="/import" enctype="multipart/form-data" class="input-group">
+                        <select class="form-select bg-dark border-secondary text-light" name="type"
+                            style="max-width: 120px;">
+                            <option value="users">Users</option>
+                            <option value="orders">Orders</option>
+                        </select>
+                        <input type="file" class="form-control bg-dark border-secondary text-light" name="file"
+                            required>
+                        <button class="btn btn-success" type="submit">Import</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+</div>
+<div class="col-lg-6">
+<!-- Top Users (Leaderboard) -->
+        <div class="card bg-dark-glass border-0 shadow-sm mb-4">
+            <div
+                class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-white"><i class="fas fa-medal me-2 text-warning"></i>Top Users</h5>
+                <span class="badge bg-secondary bg-opacity-25 text-light">Points Leaderboard</span>
+            </div>
+            <div class="card-body px-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead class="bg-dark bg-opacity-50">
+                            <tr>
+                                <th class="ps-4">Rank</th>
+                                <th>Name</th>
+                                <th>Points</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for u in leaderboard %}
+                            <tr>
+                                <td class="ps-4">
+                                    {% if loop.index == 1 %}🥇{% elif loop.index == 2 %}🥈{% elif loop.index == 3 %}🥉{%
+                                    else %}{{ loop.index }}{% endif %}
+                                </td>
+                                <td>
+                                    <div class="fw-bold text-white">{{ u.first_name }}</div>
+                                    <div class="small text-muted">@{{ u.username }}</div>
+                                </td>
+                                <td><span class="badge bg-primary bg-opacity-25 text-light">{{ u.points }}</span></td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted">No users found.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+</div>
+<div class="col-lg-6">
+<!-- Bulk Operations -->
+        <div class="card bg-dark-glass border-0 shadow-sm mb-4">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
+                <h5 class="mb-0 text-white"><i class="fas fa-users-cog me-2 text-danger"></i>Bulk User Actions</h5>
+            </div>
+            <div class="card-body px-4">
+                <!-- Bulk Points -->
+                <form method="POST" action="/power_tools/bulk_points" class="mb-4">
+                    <label class="form-label text-muted small text-uppercase fw-bold">Mass Points Update</label>
+                    <div class="input-group mb-2">
+                        <input type="number" class="form-control bg-dark border-secondary text-light" name="points"
+                            placeholder="+/- Points" required>
+                        <button class="btn btn-info fw-bold" type="submit">Apply to All</button>
+                    </div>
+                    <input type="number" class="form-control form-control-sm bg-dark border-secondary text-light"
+                        name="min_points" placeholder="Optional: Only if current points > X">
+                </form>
+
+                <hr class="border-secondary mb-4">
+
+                <!-- Bulk Ban -->
+                <form method="POST" action="/power_tools/bulk_ban">
+                    <label class="form-label text-muted small text-uppercase fw-bold">Bulk Ban / Unban</label>
+                    <textarea class="form-control bg-dark border-secondary text-light mb-2" name="user_ids" rows="2"
+                        placeholder="ID1, ID2, ID3..."></textarea>
+                    <div class="d-flex gap-2">
+                        <button type="submit" name="action" value="ban" class="btn btn-danger flex-grow-1 fw-bold">Ban
+                            Users</button>
+                        <button type="submit" name="action" value="unban"
+                            class="btn btn-success flex-grow-1 fw-bold">Unban Users</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}

@@ -1,0 +1,301 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-dark-glass border-0 shadow-lg">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-circle bg-danger bg-opacity-25 text-danger me-3">
+                            <i class="fas fa-ticket-alt fa-2x"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-1 text-white">Gift Codes</h4>
+                            <p class="mb-0 text-muted">Manage promotional codes and rewards.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Quick Create -->
+    <div class="col-xl-4 mb-4">
+        <div class="card bg-dark-glass border-0 shadow-sm h-100">
+            <div
+                class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-white"><i class="fas fa-magic me-2 text-warning"></i>Generate Codes</h5>
+                <ul class="nav nav-pills card-header-pills" id="genModeTabs" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active btn-sm" data-bs-toggle="pill"
+                            data-bs-target="#singleGen">Single</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#bulkGen">Bulk</button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body px-4">
+                <div class="tab-content">
+                    <!-- Single -->
+                    <div class="tab-pane fade show active" id="singleGen">
+                        <form method="POST" action="/gift-codes/create">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small text-uppercase fw-bold">Code</label>
+                                <input type="text"
+                                    class="form-control bg-dark border-secondary text-light font-monospace text-uppercase"
+                                    name="code" placeholder="Auto-generated if empty">
+                            </div>
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label class="form-label text-muted small text-uppercase fw-bold">Points</label>
+                                    <input type="number" class="form-control bg-dark border-secondary text-light"
+                                        name="points" placeholder="e.g. 100" required>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label class="form-label text-muted small text-uppercase fw-bold">Days</label>
+                                    <input type="number" class="form-control bg-dark border-secondary text-light"
+                                        name="days" value="30">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label text-muted small text-uppercase fw-bold">Max Uses</label>
+                                <input type="number" class="form-control bg-dark border-secondary text-light"
+                                    name="usage" value="1">
+                            </div>
+                            <button type="submit" class="btn btn-warning w-100 fw-bold">
+                                <i class="fas fa-plus me-2"></i>Create Code
+                            </button>
+                        </form>
+                    </div>
+
+                    <!-- Bulk -->
+                    <div class="tab-pane fade" id="bulkGen">
+                        <form id="bulkForm" onsubmit="return bulkSubmit(event)">
+                            <div class="mb-3">
+                                <label class="form-label text-muted small text-uppercase fw-bold">Prefix</label>
+                                <input type="text"
+                                    class="form-control bg-dark border-secondary text-light font-monospace text-uppercase"
+                                    name="prefix" placeholder="e.g. SUMMER" required>
+                            </div>
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label class="form-label text-muted small text-uppercase fw-bold">Points</label>
+                                    <input type="number" class="form-control bg-dark border-secondary text-light"
+                                        name="points" required>
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label class="form-label text-muted small text-uppercase fw-bold">Count</label>
+                                    <input type="number" class="form-control bg-dark border-secondary text-light"
+                                        name="count" placeholder="Qty" required>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label class="form-label text-muted small text-uppercase fw-bold">Days</label>
+                                    <input type="number" class="form-control bg-dark border-secondary text-light"
+                                        name="days" value="30">
+                                </div>
+                                <div class="col-6 mb-3">
+                                    <label class="form-label text-muted small text-uppercase fw-bold">Uses/Code</label>
+                                    <input type="number" class="form-control bg-dark border-secondary text-light"
+                                        name="usage" value="1">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 fw-bold">
+                                <i class="fas fa-magic me-2"></i>Bulk Create & Post
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Codes List -->
+    <div class="col-xl-8">
+        <div class="card bg-dark-glass border-0 shadow-sm h-100">
+            <div
+                class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-white">Code Inventory</h5>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-sm btn-outline-danger" onclick="deleteByPrefix()">
+                        <i class="fas fa-trash me-1"></i>Del by Prefix
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger" onclick="bulkDeleteSelected()">
+                        <i class="fas fa-trash-alt me-1"></i>Del Selected
+                    </button>
+                </div>
+            </div>
+            <div class="card-body px-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0" id="codesTable">
+                        <thead class="bg-dark bg-opacity-50">
+                            <tr>
+                                <th class="ps-4" style="width: 40px;">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="selectAll">
+                                    </div>
+                                </th>
+                                <th>Code</th>
+                                <th>Reward</th>
+                                <th>Usage</th>
+                                <th>Status</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for code in codes %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input code-check" type="checkbox"
+                                            value="{{ code.id }}">
+                                    </div>
+                                </td>
+                                <td>
+                                    <code class="text-warning fw-bold">{{ code.code }}</code>
+                                    <div class="text-muted small" style="font-size: 0.75rem;">Created: {{
+                                        code.created_at|formatted_time }}</div>
+                                </td>
+                                <td>
+                                    <span class="badge bg-success bg-opacity-25 text-success">+{{ code.points }}
+                                        pts</span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div class="progress flex-grow-1 bg-dark border border-secondary"
+                                            style="height: 6px; width: 60px;">
+                                            {% set usage_pct = (code.usage_count / code.usage_limit * 100)|round %}
+                                            <div class="progress-bar bg-info" style="width: {{ usage_pct }}%"></div>
+                                        </div>
+                                        <span class="ms-2 small text-muted">{{ code.usage_count }}/{{ code.usage_limit
+                                            }}</span>
+                                    </div>
+                                </td>
+                                <td>
+                                    {% if code.enabled %}
+                                    <span
+                                        class="badge bg-success bg-opacity-10 text-success border border-success border-opacity-25">Active</span>
+                                    {% else %}
+                                    <span
+                                        class="badge bg-danger bg-opacity-10 text-danger border border-danger border-opacity-25">Disabled</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group">
+                                        <a href="/gift-codes/{{ code.id }}/redeemers"
+                                            class="btn btn-sm btn-outline-info" title="View Redeemers">
+                                            <i class="fas fa-users"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-outline-danger"
+                                            onclick="deleteGift('{{ code.code }}')">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-5">No codes found. Generate some!</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .nav-pills .nav-link.active { background: linear-gradient(135deg, #f59e0b, #d97706); color: #000; }
+    .nav-pills .nav-link { color: var(--text-secondary, #94a3b8); transition: all 0.2s ease; }
+    .nav-pills .nav-link:hover { color: var(--text-primary, #f0f4ff); background: rgba(255,255,255,0.06); }
+</style>
+
+<script>
+    async function bulkSubmit(e) {
+        e.preventDefault();
+        const btn = e.target.querySelector('button[type="submit"]');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Creating...';
+
+        const fd = new FormData(document.getElementById('bulkForm'));
+        try {
+            const resp = await fetch('/gift-codes/bulk', { method: 'POST', body: fd });
+            const t = await resp.text();
+            alert(t); // Or use a toast
+            location.reload();
+        } catch (err) {
+            alert('Error: ' + err);
+            btn.disabled = false;
+            btn.innerHTML = originalText;
+        }
+        return false;
+    }
+
+    async function deleteGift(code) {
+        if (!confirm('Delete code ' + code + '?')) return;
+        const fd = new FormData(); fd.append('code', code);
+        try {
+            const r = await fetch('/gift-codes/delete-api', { method: 'POST', body: fd });
+            const t = await r.text();
+            if (r.ok) location.reload();
+            else alert('Error: ' + t);
+        } catch (err) {
+            alert('Network error');
+        }
+    }
+
+    async function deleteByPrefix() {
+        const p = prompt('Enter prefix to delete (e.g. SUMMER)');
+        if (!p) return;
+        const fd = new FormData(); fd.append('prefix', p);
+        try {
+            const r = await fetch('/gift-codes/delete-prefix', { method: 'POST', body: fd });
+            alert(await r.text());
+            location.reload();
+        } catch (err) {
+            alert('Network error');
+        }
+    }
+
+    // Select All
+    document.getElementById('selectAll').addEventListener('change', function () {
+        document.querySelectorAll('.code-check').forEach(cb => cb.checked = this.checked);
+    });
+
+    async function bulkDeleteSelected() {
+        let selected = [];
+        document.querySelectorAll('.code-check:checked').forEach(cb => selected.push(parseInt(cb.value)));
+
+        if (selected.length === 0) {
+            alert('Select codes first.');
+            return;
+        }
+
+        if (!confirm(`Delete ${selected.length} selected codes?`)) return;
+
+        try {
+            const resp = await fetch('/gift-codes/bulk-delete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ids: selected })
+            });
+            const data = await resp.json();
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error: ' + data.message);
+            }
+        } catch (err) {
+            alert('Network error');
+        }
+    }
+</script>
+{% endblock %}

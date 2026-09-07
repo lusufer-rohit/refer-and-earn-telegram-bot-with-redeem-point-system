@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-dark-glass border-0 shadow-lg">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-circle bg-info bg-opacity-25 text-info me-3">
+                            <i class="fas fa-history fa-2x"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-1 text-white">Redemption History</h4>
+                            <p class="mb-0 text-muted">Viewing history for <strong>{{ user.username or user_id
+                                    }}</strong></p>
+                        </div>
+                    </div>
+                    <div class="d-flex gap-2">
+                        {% if history %}
+                        <form action="/users/{{ user_id }}/history/delete_all" method="POST"
+                            onsubmit="return confirm('WARNING: This will restock all redeemed items for this user and clear their entire history. Are you sure?');">
+                            <button type="submit" class="btn btn-outline-danger">
+                                <i class="fas fa-trash-alt me-1"></i> Bulk Delete History
+                            </button>
+                        </form>
+                        {% endif %}
+                        <a href="/users" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-1"></i> Back to Users
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card bg-dark-glass border-0 shadow-sm">
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0" id="historyTable">
+                        <thead class="bg-dark bg-opacity-50">
+                            <tr>
+                                <th class="ps-4">Date & Time</th>
+                                <th>Type</th>
+                                <th>Item / Category</th>
+                                <th>Price</th>
+                                <th>Credentials</th>
+                                <th>Watermark ID</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in history %}
+                            <tr>
+                                <td class="ps-4 text-muted small">
+                                    {{ item.redeemed_at|formatted_time }}
+                                </td>
+                                <td>
+                                    {% if item.type == 'OTT Account' %}
+                                    <span class="badge bg-primary bg-opacity-25 text-primary border border-primary border-opacity-25">{{ item.type }}</span>
+                                    {% elif item.type == 'Gift Code' %}
+                                    <span class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25">{{ item.type }}</span>
+                                    {% elif item.type == 'System' or item.type == 'Channel Event' %}
+                                    <span class="badge bg-secondary bg-opacity-25 text-secondary border border-secondary border-opacity-25">{{ item.type }}</span>
+                                    {% elif item.type == 'Chat Message' %}
+                                    <span class="badge bg-info bg-opacity-25 text-info border border-info border-opacity-25">{{ item.type }}</span>
+                                    {% else %}
+                                    <span class="badge bg-warning bg-opacity-25 text-warning border border-warning border-opacity-25">{{ item.type }}</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="text-white fw-bold">{{ item.title }}</div>
+                                </td>
+                                <td>
+                                    {% if item.type == 'OTT Account' %}
+                                    <span class="text-warning fw-bold">-{{ item.price }}</span>
+                                    {% else %}
+                                    <span class="text-success fw-bold">{{ item.price }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="font-monospace small text-info">
+                                    {{ item.credentials }}
+                                </td>
+                                <td class="font-monospace small text-muted">
+                                    {{ item.watermark }}
+                                </td>
+                                <td>
+                                    {% if item.type in ['OTT Account', 'Gift Code'] %}
+                                    <button class="btn btn-sm btn-outline-danger" title="Delete & Restock"
+                                        onclick="deleteHistoryItem('{{ user_id }}', '{{ item.type }}', '{{ item.id }}')">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                    {% else %}
+                                    <span class="text-muted">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="7" class="text-center text-muted py-5">
+                                    <i class="fas fa-history fa-3x mb-3 text-secondary opacity-50"></i>
+                                    <p class="mb-0">No history found for this user.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    function deleteHistoryItem(userId, itemType, itemId) {
+        if (!confirm(`Are you sure you want to delete this ${itemType}? It will be restocked.`)) {
+            return;
+        }
+
+        fetch(`/users/${userId}/history/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                type: itemType,
+                id: itemId
+            })
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Item successfully deleted/restocked!');
+                    location.reload();
+                } else {
+                    alert('Error deleting item: ' + (data.error || 'Unknown error'));
+                }
+            })
+            .catch(err => {
+                console.error('Error:', err);
+                alert('Failed to send delete request');
+            });
+    }
+</script>
+{% endblock %}

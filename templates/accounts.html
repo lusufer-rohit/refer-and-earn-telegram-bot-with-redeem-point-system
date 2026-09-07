@@ -1,0 +1,314 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card bg-dark-glass border-0 shadow-lg">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <div class="icon-circle bg-success bg-opacity-25 text-success me-3">
+                            <i class="fas fa-gift fa-2x"></i>
+                        </div>
+                        <div>
+                            <h4 class="mb-1 text-white">Account Inventory</h4>
+                            <p class="mb-0 text-muted">Manage redeemable accounts.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <!-- Add Account Card -->
+        <div class="card bg-dark-glass border-0 shadow-sm mb-4">
+            <div
+                class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 text-white"><i class="fas fa-plus-circle me-2 text-primary"></i>Add Accounts</h5>
+                <ul class="nav nav-pills card-header-pills" id="addModeTabs" role="tablist">
+                    <li class="nav-item">
+                        <button class="nav-link active btn-sm" data-bs-toggle="pill"
+                            data-bs-target="#singleAdd">Single</button>
+                    </li>
+                    <li class="nav-item">
+                        <button class="nav-link btn-sm" data-bs-toggle="pill" data-bs-target="#bulkAdd">Bulk</button>
+                    </li>
+                </ul>
+            </div>
+            <div class="card-body px-4">
+                <div class="tab-content">
+                    <!-- Single Add -->
+                    <div class="tab-pane fade show active" id="singleAdd">
+                        <form method="POST" action="/accounts/add" class="row g-3">
+                            <input type="hidden" name="account_type" value="redeem">
+                            <div class="col-md-3">
+                                <label class="form-label text-muted small text-uppercase fw-bold">Category</label>
+                                <select class="form-select bg-dark border-secondary text-light" name="category"
+                                    required>
+                                    <option value="">Select Category</option>
+                                    {% for name, cat in redeem_categories.items() %}
+                                    <option value="{{ name }}">{{ name }} ({{ cat.price }} pts)</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label text-muted small text-uppercase fw-bold">Credentials</label>
+                                <input type="text" class="form-control bg-dark border-secondary text-light"
+                                    name="credentials" placeholder="email:pass" required>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label text-muted small text-uppercase fw-bold">Validity
+                                    (Days)</label>
+                                <input type="number" class="form-control bg-dark border-secondary text-light"
+                                    name="validity_days" value="30" required>
+                            </div>
+                            <div class="col-md-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary w-100 fw-bold">Add One</button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Bulk Add -->
+                    <div class="tab-pane fade" id="bulkAdd">
+                        <form method="POST" action="/accounts/bulk_add" class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label text-muted small text-uppercase fw-bold">Category</label>
+                                <select class="form-select bg-dark border-secondary text-light" name="category"
+                                    required>
+                                    <option value="">Select Category</option>
+                                    {% for name, cat in redeem_categories.items() %}
+                                    <option value="{{ name }}">{{ name }} ({{ cat.price }} pts)</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label text-muted small text-uppercase fw-bold">Validity
+                                    (Days)</label>
+                                <input type="number" class="form-control bg-dark border-secondary text-light"
+                                    name="validity_days" value="30" required>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label text-muted small text-uppercase fw-bold">Credentials (One per
+                                    line)</label>
+                                <textarea class="form-control bg-dark border-secondary text-light font-monospace"
+                                    name="credentials_bulk" rows="5" placeholder="user:pass&#10;user2:pass2"
+                                    required></textarea>
+                            </div>
+                            <div class="col-12 text-end">
+                                <button type="submit" class="btn btn-success fw-bold"><i
+                                        class="fas fa-upload me-2"></i>Bulk Upload</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Inventory List -->
+        <div class="card bg-dark-glass border-0 shadow-sm">
+            <div
+                class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-3">
+                    <h5 class="mb-0 text-white">Inventory Items</h5>
+                    <span class="badge bg-secondary bg-opacity-25 text-light">{{ redeem_accounts|length }}
+                        Available</span>
+                </div>
+                <div class="d-flex gap-2">
+                    <select class="form-select form-select-sm bg-dark border-secondary text-light" id="categoryFilter"
+                        style="width: 150px;">
+                        <option value="">All Categories</option>
+                        {% for name in redeem_categories %}
+                        <option value="{{ name }}">{{ name }}</option>
+                        {% endfor %}
+                    </select>
+                    <button class="btn btn-sm btn-outline-danger" onclick="bulkDelete()">
+                        <i class="fas fa-trash me-1"></i>Delete Selected
+                    </button>
+                </div>
+            </div>
+            <div class="card-body px-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0" id="accountsTable">
+                        <thead class="bg-dark bg-opacity-50">
+                            <tr>
+                                <th class="ps-4" style="width: 40px;">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="selectAll">
+                                    </div>
+                                </th>
+                                <th>Category</th>
+                                <th>Credentials</th>
+                                <th>Validity</th>
+                                <th>Added</th>
+                                <th class="text-end pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for acc in redeem_accounts %}
+                            <tr class="account-row" data-category="{{ acc.category }}">
+                                <td class="ps-4">
+                                    <div class="form-check">
+                                        <input class="form-check-input account-check" type="checkbox"
+                                            value="{{ acc.id }}">
+                                    </div>
+                                </td>
+                                <td>
+                                    <span
+                                        class="badge bg-info bg-opacity-10 text-info border border-info border-opacity-25">{{
+                                        acc.category }}</span>
+                                </td>
+                                <td class="font-monospace text-muted small">{{ acc.credentials }}</td>
+                                <td>{{ acc.validity_days }} days</td>
+                                <td class="text-muted small">
+                                    {% if acc.added_at %}
+                                    {{ acc.added_at|formatted_time }}
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-4">
+                                    <div class="btn-group">
+                                        <button class="btn btn-sm btn-outline-primary"
+                                            onclick="editAccount('{{ acc.id }}', '{{ acc.category }}', '{{ acc.credentials|replace("'", "\\'") }}', {{ acc.validity_days }})">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <form method="POST" action="/accounts/delete_single" class="d-inline"
+                                            onsubmit="return confirm('Delete this account?');">
+                                            <input type="hidden" name="account_id" value="{{ acc.id }}">
+                                            <input type="hidden" name="account_type" value="redeem">
+                                            <button class="btn btn-sm btn-outline-danger">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="6" class="text-center text-muted py-5">No accounts in inventory.</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content bg-dark text-white border-secondary">
+            <div class="modal-header border-secondary">
+                <h5 class="modal-title">Edit Account</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="/accounts/edit">
+                <div class="modal-body">
+                    <input type="hidden" id="edit_account_id" name="account_id">
+                    <input type="hidden" name="account_type" value="redeem">
+
+                    <div class="mb-3">
+                        <label class="form-label">Category</label>
+                        <select class="form-select bg-dark text-white border-secondary" id="edit_category"
+                            name="category" required>
+                            {% for name in redeem_categories %}
+                            <option value="{{ name }}">{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Credentials</label>
+                        <input type="text" class="form-control bg-dark text-white border-secondary"
+                            id="edit_credentials" name="credentials" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Validity (Days)</label>
+                        <input type="number" class="form-control bg-dark text-white border-secondary" id="edit_validity"
+                            name="validity_days" required>
+                    </div>
+                </div>
+                <div class="modal-footer border-secondary">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .nav-pills .nav-link.active {
+        background: linear-gradient(135deg, var(--primary, #8b5cf6), var(--secondary, #06b6d4));
+    }
+    .nav-pills .nav-link {
+        color: var(--text-secondary, #94a3b8);
+        transition: all 0.2s ease;
+    }
+    .nav-pills .nav-link:hover {
+        color: var(--text-primary, #f0f4ff);
+        background: rgba(255,255,255,0.06);
+    }
+</style>
+
+<script>
+    // Filter
+    document.getElementById('categoryFilter').addEventListener('change', function () {
+        let filter = this.value;
+        document.querySelectorAll('.account-row').forEach(row => {
+            let cat = row.getAttribute('data-category');
+            row.style.display = (filter === '' || cat === filter) ? '' : 'none';
+        });
+    });
+
+    // Select All
+    document.getElementById('selectAll').addEventListener('change', function () {
+        document.querySelectorAll('.account-check').forEach(cb => cb.checked = this.checked);
+    });
+
+    // Edit
+    function editAccount(id, cat, creds, val) {
+        document.getElementById('edit_account_id').value = id;
+        document.getElementById('edit_category').value = cat;
+        document.getElementById('edit_credentials').value = creds;
+        document.getElementById('edit_validity').value = val;
+        new bootstrap.Modal(document.getElementById('editModal')).show();
+    }
+
+    // Bulk Delete
+    function bulkDelete() {
+        let selected = [];
+        document.querySelectorAll('.account-check:checked').forEach(cb => selected.push(cb.value));
+
+        if (selected.length === 0) {
+            alert('Select accounts first.');
+            return;
+        }
+
+        if (confirm(`Delete ${selected.length} accounts?`)) {
+            let form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/accounts/bulk_delete';
+
+            let input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'account_ids';
+            input.value = selected.join(',');
+            form.appendChild(input);
+
+            let typeInput = document.createElement('input');
+            typeInput.type = 'hidden';
+            typeInput.name = 'account_type';
+            typeInput.value = 'redeem';
+            form.appendChild(typeInput);
+
+            document.body.appendChild(form);
+            form.submit();
+        }
+    }
+</script>
+{% endblock %}

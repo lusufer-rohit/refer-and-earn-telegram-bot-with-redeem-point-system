@@ -1,0 +1,79 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# Environment variables & secrets (CRITICAL - DO NOT PUSH)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Database & Runtime Data Files (CRITICAL - DO NOT PUSH)
+*.db
+*.sqlite
+*.sqlite3
+*.json
+*.bak
+*.bak2
+*.tmp
+*.log
+data/
+user_data*
+chat_messages*
+ott_accounts*
+channel_stats*
+user_activity*
+admin_notifications*
+gift_codes*
+pending_referrals*
+categories*
+channels*
+broadcast_history*
+system_config*
+scheduler_config*
+referral_config*
+bot_status*
+payment_config*
+notification_preferences*
+notifications*
+
+# IDE & Editor files
+.cursor/
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db

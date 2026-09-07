@@ -1,0 +1,8 @@
+flask
+flask-login
+python-telegram-bot==22.2
+requests
+httpx
+schedule
+APScheduler
+

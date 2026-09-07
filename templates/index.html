@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <title>Bot Status</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 2rem;
+      color: #222;
+    }
+
+    .card {
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 1.25rem;
+      max-width: 520px;
+    }
+
+    .ok {
+      color: #0a9a3c;
+    }
+
+    .warn {
+      color: #d17a00;
+    }
+
+    .label {
+      color: #555;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="card">
+    <h2>Telegram Bot Status</h2>
+    <p><span class="label">Running:</span>
+      <strong class="{{ 'ok' if status.is_running else 'warn' }}">
+        {{ 'Yes' if status.is_running else 'No' }}
+      </strong>
+    </p>
+    <p><span class="label">Webhook mode:</span> {{ 'Yes' if status.webhook_mode else 'No' }}</p>
+    <p><span class="label">Start time:</span> {{ status.start_time or 'Not started' }}</p>
+    <p><span class="label">Admins:</span> {{ admin_usernames or admin_ids }}</p>
+
+    <div style="margin-top: 2rem; text-align: center;">
+      <a href="/login"
+        style="background-color: #0088cc; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">Login
+        to Dashboard</a>
+    </div>
+  </div>
+</body>
+
+</html>

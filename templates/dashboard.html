@@ -1,0 +1,203 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Top Stats Row -->
+<div class="row g-4 mb-4">
+    <!-- Total Users -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card bg-dark-glass border-0 shadow-sm hover-elevate h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="text-muted text-uppercase small fw-bold mb-1">Total Users</h6>
+                        <h2 class="text-white mb-0 fw-bold counter-animate">{{ stats.total_users }}</h2>
+                    </div>
+                    <div class="icon-box bg-primary bg-opacity-10 text-primary">
+                        <i class="fas fa-users fa-lg"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center text-sm">
+                    <span class="badge bg-success me-2">
+                        <i class="fas fa-arrow-up me-1"></i>{{ stats.active_today }}
+                    </span>
+                    <span class="text-muted small">active today</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Inventory -->
+    <div class="col-xl-3 col-md-6">
+        <div class="card bg-dark-glass border-0 shadow-sm hover-elevate h-100">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="text-muted text-uppercase small fw-bold mb-1">Stock Status</h6>
+                        <h2 class="text-white mb-0 fw-bold counter-animate">{{ stats.total_accounts }}</h2>
+                    </div>
+                    <div class="icon-box bg-warning bg-opacity-10 text-warning">
+                        <i class="fas fa-box-open fa-lg"></i>
+                    </div>
+                </div>
+                <div class="d-flex align-items-center text-sm">
+                    {% if stats.low_stock_count > 0 %}
+                    <span class="badge bg-danger me-2">
+                        <i class="fas fa-exclamation-triangle me-1"></i>{{ stats.low_stock_count }}
+                    </span>
+                    <span class="text-muted small">low stock items</span>
+                    {% else %}
+                    <span class="badge bg-success me-2">
+                        <i class="fas fa-check me-1"></i>OK
+                    </span>
+                    <span class="text-muted small">Inventory healthy</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts & Activity Row -->
+<div class="row g-4 mb-4">
+    <!-- Channel Activity -->
+    <div class="col-lg-8">
+        <div class="card bg-dark-glass border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0 pt-4 px-4 d-flex justify-content-between align-items-center">
+                <div>
+                    <h5 class="mb-0 text-white">Channel Growth</h5>
+                    <small class="text-muted">Membership changes over last 7 days</small>
+                </div>
+                <div class="dropdown">
+                    <button class="btn btn-sm btn-outline-light" type="button"><i class="fas fa-download me-1"></i>Report</button>
+                </div>
+            </div>
+            <div class="card-body px-4">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead class="bg-dark bg-opacity-50">
+                            <tr>
+                                <th class="ps-3 border-0 rounded-start">Date</th>
+                                <th class="border-0">Joined</th>
+                                <th class="pe-3 border-0 rounded-end">Left</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% if channel_daily %}
+                            {% for row in channel_daily %}
+                            <tr>
+                                <td class="ps-3">{{ row.date }}</td>
+                                <td class="text-success">+{{ row.joined }}</td>
+                                <td class="text-danger pe-3">-{{ row.left }}</td>
+                            </tr>
+                            {% endfor %}
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-4">No data available</td>
+                            </tr>
+                            {% endif %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bot Health -->
+    <div class="col-lg-4">
+        <div class="card bg-dark-glass border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
+                <h5 class="mb-0 text-white">System Health</h5>
+            </div>
+            <div class="card-body px-4">
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="text-muted small">Channel Health</span>
+                        <span class="text-white small fw-bold">{{ stats.channel_health }}%</span>
+                    </div>
+                    <div class="progress" style="height: 6px;">
+                        <div class="progress-bar" role="progressbar"
+                            style="width: {{ stats.channel_health }}%"></div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between mb-3 p-3 rounded-3 bg-dark bg-opacity-50">
+                    <div class="d-flex align-items-center">
+                        <div class="status-dot {{ 'bg-success' if stats.bot_running else 'bg-danger' }} me-3"></div>
+                        <div>
+                            <div class="text-white fw-bold">Bot Status</div>
+                            <div class="text-muted small">{{ 'Online' if stats.bot_running else 'Offline' }}</div>
+                        </div>
+                    </div>
+                    <div class="text-end">
+                        <div class="text-muted small">Uptime</div>
+                        <div class="text-white font-monospace small">{{ stats.uptime }}</div>
+                    </div>
+                </div>
+
+                <div class="d-flex align-items-center justify-content-between mb-3 p-3 rounded-3 bg-dark bg-opacity-50">
+                    <div class="d-flex align-items-center">
+                        <div class="status-dot {{ 'bg-success' if stats.scheduler_on else 'bg-warning' }} me-3"></div>
+                        <div>
+                            <div class="text-white fw-bold">Scheduler</div>
+                            <div class="text-muted small">{{ 'Active' if stats.scheduler_on else 'Disabled' }}</div>
+                        </div>
+                    </div>
+                    <i class="fas fa-clock text-muted"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent lists -->
+<div class="row g-4">
+    <!-- New Users -->
+    <div class="col-lg-6">
+        <div class="card bg-dark-glass border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-0 pt-4 px-4">
+                <h5 class="mb-0 text-white">New Users</h5>
+            </div>
+            <div class="card-body px-0">
+                <div class="table-responsive">
+                    <table class="table table-dark table-hover align-middle mb-0">
+                        <thead class="bg-dark bg-opacity-50">
+                            <tr>
+                                <th class="ps-4">User</th>
+                                <th>Joined</th>
+                                <th class="pe-4">Balance</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for user in stats.latest_users %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="d-flex align-items-center">
+                                        <div class="avatar-sm bg-gradient-secondary rounded-circle me-2 d-flex align-items-center justify-content-center text-white small fw-bold"
+                                            style="width:32px;height:32px;">
+                                            {{ user.first_name[0]|upper if user.first_name else 'U' }}
+                                        </div>
+                                        <div>
+                                            <div class="text-white small fw-bold">{{ user.first_name or 'User' }}</div>
+                                            <div class="text-muted small font-monospace" style="font-size: 0.75rem;">{{ user.user_id }}</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="text-muted small">Just now</td>
+                                <td class="pe-4 text-warning fw-bold">{{ user.points }} pts</td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="3" class="text-center text-muted py-3">No new users</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer bg-transparent border-0 p-3 text-center">
+                <a href="/users" class="text-decoration-none text-primary small fw-bold">View All Users <i class="fas fa-arrow-right ms-1"></i></a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
