@@ -77,8 +77,8 @@ flowchart TD
 
 ### 1. Clone Repository
 ```bash
-git clone git@github.com:lusufer-rohit/Telegram-OTT-Giveaway-Bot.git
-cd Telegram-OTT-Giveaway-Bot
+git clone git@github.com:lusufer-rohit/refer-and-earn-telegram-bot-with-redeem-point-system.git
+cd refer-and-earn-telegram-bot-with-redeem-point-system
 ```
 
 ### 2. Configure Virtual Environment
